@@ -48,7 +48,7 @@ do_add:
     cvta.to.global.u64      %rd6, %rd3;     // get global address of C
     
     // Multiply index by 4 (sizeof(float)) using 64-bit multiplication
-    mul.lo.s64      %rd7, %r5, 4;           // %rd7 = idx * 4
+    mul.lo.s64  %rd7, %r5, 4;           // %rd7 = idx * 4
     
     // Add offset to base addresses
     add.s64         %rd4, %rd4, %rd7;       // A + offset
@@ -60,10 +60,10 @@ do_add:
     ld.global.f32   %f2, [%rd5];
     
     // Add
-    add.f32         %f3, %f1, %f2;
+    add.f32 %f3, %f1, %f2;
     
     // Store result
-    st.global.f32   [%rd6], %f3;
+    st.global.f32 [%rd6], %f3;
     
     ret;
 }
