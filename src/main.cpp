@@ -17,7 +17,7 @@ int main()
 
         if (vecAdd)
         {
-            const int N = 1024;
+            int N = 1024;
             const int threads_per_block = 256;
             const int blocks = (N + threads_per_block - 1) / threads_per_block;
 
