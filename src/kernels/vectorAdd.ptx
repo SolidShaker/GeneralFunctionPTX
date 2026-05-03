@@ -5,56 +5,68 @@
 
 
 
-.visible .entry krVecAdd(
+//
+// Vector addition kernel: C[i] = A[i] + B[i]
+// Corrected version for PTX 6.5+
+//
+.version 6.5
+.target sm_75
+.address_size 64
+
+.visible .entry vec_add(
     .param .u64 param_A,
     .param .u64 param_B,
     .param .u64 param_C,
     .param .u32 param_N
 )
 {
-    // Register declarations
-    .reg .pred      %p <2>;
-    .reg .f32       %f <3>;
-    .reg .u64       %rd <10>;
-    .reg .u32       %r <5>;
+    .reg .pred      %p<1>;
+    .reg .f32       %f<3>;
+    .reg .u64       %rd<8>;
+    .reg .u32       %r<6>;
     
-    // Load kernel parameters
-    ld.param.u64    %rd1, [param_A];      // base address of A
-    ld.param.u64    %rd2, [param_B];      // base address of B
-    ld.param.u64    %rd3, [param_C];      // base address of C
-    ld.param.u32    %r1, [param_N];       // N (number of elements)
+    // Load parameters
+    ld.param.u64    %rd1, [param_A];
+    ld.param.u64    %rd2, [param_B];
+    ld.param.u64    %rd3, [param_C];
+    ld.param.u32    %r1, [param_N];
     
     // Get thread indices
-    mov.u32         %r2, %tid.x;          // thread ID in x dimension
-    mov.u32         %r3, %ctaid.x;        // block ID in x dimension
-    mov.u32         %r4, %ntid.x;         // block size in x dimension
+    mov.u32         %r2, %tid.x;
+    mov.u32         %r3, %ctaid.x;
+    mov.u32         %r4, %ntid.x;
     
-    // Calculate global index: idx = blockIdx.x * blockDim.x + threadIdx.x
-    mad.lo.s32      %r2, %r3, %r4, %r2;   // %r2 = global index
+    // Calculate global index
+    mad.lo.s32      %r5, %r3, %r4, %r2;   // %r5 = idx
     
-    // Check bounds (idx < N)
-    setp.lt.s32     %p1, %r2, %r1;
-    @%p1 bra        do_add;
-    exit;                                   // out of bounds, exit
+    // Check bounds
+    setp.lt.s32     %p0, %r5, %r1;
+    @%p0 bra        do_add;
+    exit;
     
 do_add:
-    // Convert index to byte offset (each float = 4 bytes)
-    mul.lo.s64      %rd4, %r2, 4;          // offset = index * sizeof(float)
+    // Convert index to byte offset (64-bit)
+    cvta.to.global.u64      %rd4, %rd1;     // get global address of A
+    cvta.to.global.u64      %rd5, %rd2;     // get global address of B
+    cvta.to.global.u64      %rd6, %rd3;     // get global address of C
     
-    // Compute addresses: base + offset
-    add.u64         %rd5, %rd1, %rd4;      // address of A[idx]
-    add.u64         %rd6, %rd2, %rd4;      // address of B[idx]
-    add.u64         %rd7, %rd3, %rd4;      // address of C[idx]
+    // Multiply index by 4 (sizeof(float)) using 64-bit multiplication
+    mul.lo.s64      %rd7, %r5, 4;           // %rd7 = idx * 4
     
-    // Load values from global memory
-    ld.global.f32   %f1, [%rd5];           // load A[idx]
-    ld.global.f32   %f2, [%rd6];           // load B[idx]
+    // Add offset to base addresses
+    add.s64         %rd4, %rd4, %rd7;       // A + offset
+    add.s64         %rd5, %rd5, %rd7;       // B + offset
+    add.s64         %rd6, %rd6, %rd7;       // C + offset
     
-    // Perform addition
-    add.f32         %f3, %f1, %f2;         // %f3 = A[idx] + B[idx]
+    // Load values
+    ld.global.f32   %f1, [%rd4];
+    ld.global.f32   %f2, [%rd5];
     
-    // Store result to global memory
-    st.global.f32   [%rd7], %f3;           // C[idx] = result
+    // Add
+    add.f32         %f3, %f1, %f2;
+    
+    // Store result
+    st.global.f32   [%rd6], %f3;
     
     ret;
 }
