@@ -37,13 +37,12 @@ add_custom_command(TARGET main POST_BUILD
 )
 
 # --- Optional: Validate PTX files during build ---
-# This runs ptxas (PTX assembler) to validate syntax without generating cubin
 find_program(PTXAS_EXECUTABLE ptxas)
 if(PTXAS_EXECUTABLE)
     foreach(PTX_FILE ${PTX_FILES})
         add_custom_command(TARGET main PRE_BUILD
             COMMAND ${PTXAS_EXECUTABLE} -arch=sm_75 ${PTX_FILE}
-            COMMENT "Validating PTX syntax: ${PTX_FILE}"
+            COMMENT "Validating PTX syntax: ${PTX_FILE} for T4 (sm_75)"
         )
     endforeach()
 endif()

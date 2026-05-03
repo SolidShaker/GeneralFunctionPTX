@@ -1,64 +1,41 @@
-.version 8.5
+.version 7.0
 .target sm_75
 .address_size 64
 
-//
-// Kernel: vector_add_kernel
-// void vector_add_kernel(float* a, float* b, float* c, int N)
-// Parameters passed via .param .u64 (pointers and integers)
-//
-.visible .entry krVectorAdd(
-    .param .u64 param_a,
-    .param .u64 param_b,
-    .param .u64 param_c,
-    .param .u32 param_n
+
+
+.visible .entry vectorAdd(
+        .param .u64 param0,
+        .param .u64 param1,
+        .param .u64 param2,
+        .param .u32 param3
 )
 {
-    // Register declarations
-    .reg .pred   %p;
-    .reg .f32    %f1, %f2, %f3;
-    .reg .u32    %tid, %ntid, %n;
-    .reg .u64    %a_ptr, %b_ptr, %c_ptr;
-    
-    // Load parameters
-    ld.param.u64    %a_ptr, [param_a];
-    ld.param.u64    %b_ptr, [param_b];
-    ld.param.u64    %c_ptr, [param_c];
-    ld.param.u32    %n,     [param_n];
-    
-    // Get thread and block indices
-    mov.u32     %tid, %tid;
-    mov.u32     %ntid, %ntid;
-    
-    // Calculate global index: idx = blockIdx.x * blockDim.x + threadIdx.x
-    // Using special registers: %ctaid.x (blockIdx.x), %ntid.x (blockDim.x), %tid.x (threadIdx.x)
-    mov.u32     %r1, %ctaid.x;
-    mov.u32     %r2, %ntid.x;
-    mul.lo.u32  %r1, %r1, %r2;
-    add.u32     %r1, %r1, %tid.x;
-    
-    // Check bounds: if (idx < n)
-    setp.lt.u32 %p, %r1, %n;
-    @%p bra     load_data;
-    ret;
-    
-load_data:
-    // Calculate addresses: a + idx, b + idx, c + idx (each float is 4 bytes)
-    mul.lo.u32  %r2, %r1, 4;
-    cvt.u64.u32 %r3, %r2;
-    add.u64     %a_addr, %a_ptr, %r3;
-    add.u64     %b_addr, %b_ptr, %r3;
-    add.u64     %c_addr, %c_ptr, %r3;
-    
-    // Load vectors
-    ld.global.f32   %f1, [%a_addr];
-    ld.global.f32   %f2, [%b_addr];
-    
-    // Compute: c = a + b
-    add.f32     %f3, %f1, %f2;
-    
-    // Store result
-    st.global.f32   [%c_addr], %f3;
-    
-    ret;
+        .reg .pred      %p<2>;
+        .reg .b32       %r<5>;
+        .reg .b64       %rd<9>;
+
+        ld.param.u64    %rd1, [param0];
+        ld.param.u64    %rd2, [param1];
+        ld.param.u64    %rd3, [param2];
+        ld.param.u32    %r1, [param3];
+
+        mov.u32         %r2, %tid.x;
+        setp.lt.u32     %p1, %r2, %r1;
+        @%p1 bra        $L__BB0_2;
+
+        ret;
+
+$L__BB0_2:
+        mul.wide.u32    %rd4, %r2, 4;
+        add.s64         %rd5, %rd1, %rd4;
+        add.s64         %rd6, %rd2, %rd4;
+        add.s64         %rd7, %rd3, %rd4;
+
+        ld.global.u32   %r3, [%rd5];
+        ld.global.u32   %r4, [%rd6];
+        add.u32         %r5, %r3, %r4;
+        st.global.u32   [%rd7], %r5;
+
+        ret;
 }
