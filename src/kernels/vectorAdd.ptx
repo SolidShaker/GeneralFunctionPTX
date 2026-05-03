@@ -9,9 +9,6 @@
 // Vector addition kernel: C[i] = A[i] + B[i]
 // Corrected version for PTX 6.5+
 //
-.version 6.5
-.target sm_75
-.address_size 64
 
 .visible .entry vec_add(
     .param .u64 param_A,
