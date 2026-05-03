@@ -4,6 +4,15 @@ project(PtxLoaderProject LANGUAGES CXX CUDA)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(POLICY CMP0146)
+    cmake_policy(SET CMP0146 NEW)
+endif()
+
+set(CMAKE_CUDA_ARCHITECTURES "75" CACHE STRING "CUDA architectures")
+
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wno-deprecated-gpu-targets")
+
+
 find_package(CUDA REQUIRED)
 
 set(KERNELS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/kernels)
@@ -13,6 +22,9 @@ file(GLOB PTX_FILES
 
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.*)
 add_executable(main ${SOURCES})
+
+
+set_source_files_properties(${SOURCES} PROPERTIES CUDA_PTX_COMPILATION ON)
 
 
 target_link_libraries(main 
