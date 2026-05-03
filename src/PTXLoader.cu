@@ -69,9 +69,7 @@ PTXLoader::GetPtxPath(const std::string& kernelName) const
     std::vector<std::string> possible_paths = 
     {
         "kernels/" + kernelName + ".ptx",                     
-        "../kernels/" + kernelName + ".ptx",                  
-        "src/kernels/" + kernelName + ".ptx",                 
-        "../../src/kernels/" + kernelName + ".ptx",          
+        "build/kernels/" + kernelName + ".ptx",                  
     };
     
     for (const auto& path : possible_paths) 
