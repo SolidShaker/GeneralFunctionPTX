@@ -58,7 +58,7 @@ PTXLoader::LoadKernel(const std::string& kernelName,
     }
 
     modules.push_back(module);
-    REPORT("Loaded kernel '" << function_name << "' from " << ptxPath);
+    REPORT("Loaded kernel '" << functionName << "' from " << ptxPath);
         
     return function;
 }
