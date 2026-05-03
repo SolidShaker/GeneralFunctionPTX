@@ -12,7 +12,7 @@ file(GLOB PTX_FILES
 )
 
 file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.*)
-add_executable(main SOURCES)
+add_executable(main ${SOURCES})
 
 
 target_link_libraries(main 
