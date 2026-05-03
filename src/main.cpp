@@ -21,13 +21,22 @@ int main()
             const int threads_per_block = 256;
             const int blocks = (N + threads_per_block - 1) / threads_per_block;
 
-            float *d_a, *d_b, *d_c;
-            cudaMalloc(&d_a, N * sizeof(float));
-            cudaMalloc(&d_b, N * sizeof(float));
-            cudaMalloc(&d_c, N * sizeof(float));
+            float* hA = new float[N];
+            float* hB = new float[N];
+            float* hC = new float[N];
 
+            for (int i = 0; i < N; ++i) hA[i] = 1.f;
+            for (int i = 0; i < N; ++i) hB[i] = 2.f;
 
-            void* args[] = { &d_a, &d_b, &d_c, &N };
+            float *dA, *dB, *dC;
+            cudaMalloc(&dA, N * sizeof(float));
+            cudaMalloc(&dB, N * sizeof(float));
+            cudaMalloc(&dC, N * sizeof(float));
+
+            cudaMemcpy(dA, hA, N * sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(dB, hB, N * sizeof(float), cudaMemcpyHostToDevice);
+
+            void* args[] = { &dA, &dB, &dC, &N };
 
             CUresult result = cuLaunchKernel(vecAdd,
                                             blocks, 1, 1,        
@@ -41,9 +50,14 @@ int main()
             REPORT("Kernel launched successfully");
             cuCtxSynchronize();
             
-            cudaFree(d_a);
-            cudaFree(d_b);
-            cudaFree(d_c);
+            cudaMemcpy(hC, dC, N * sizeof(float), cudaMemcpyDeviceToHost);
+
+            for (int i = 0; i < 10; ++i)
+                std::cout << hC[i] << " ";
+
+            cudaFree(dA);
+            cudaFree(dB);
+            cudaFree(dC);
         }
     } catch (const std::exception& e) 
     {
