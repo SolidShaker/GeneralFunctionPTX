@@ -8,8 +8,8 @@
 #include <iostream>
 #define REPORT(msg) do { \
     std::cerr << "[INFO] " \
-    << msg << " | FILE " << \
-    << __FILE__ << " | LINE " << \
+    << msg << " | FILE " \
+    << __FILE__ << " | LINE " \
     << __LINE__ << " |" << std::endl; \
 } while(0)
 
