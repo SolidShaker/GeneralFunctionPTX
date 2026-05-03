@@ -1,14 +1,10 @@
-.version 6.5
-.target sm_70
-.address_size 64
-
-
-
-
 //
 // Vector addition kernel: C[i] = A[i] + B[i]
-// Corrected version for PTX 6.5+
+// Fixed for PTX 6.5+
 //
+.version 6.5
+.target sm_75
+.address_size 64
 
 .visible .entry vec_add(
     .param .u64 param_A,
@@ -18,7 +14,7 @@
 )
 {
     .reg .pred      %p<1>;
-    .reg .f32       %f<3>;
+    .reg .f32       %f<4>;
     .reg .u64       %rd<8>;
     .reg .u32       %r<6>;
     
@@ -33,8 +29,8 @@
     mov.u32         %r3, %ctaid.x;
     mov.u32         %r4, %ntid.x;
     
-    // Calculate global index
-    mad.lo.s32      %r5, %r3, %r4, %r2;   // %r5 = idx
+    // Calculate global index = blockIdx.x * blockDim.x + threadIdx.x
+    mad.lo.s32      %r5, %r3, %r4, %r2;
     
     // Check bounds
     setp.lt.s32     %p0, %r5, %r1;
@@ -42,28 +38,24 @@
     exit;
     
 do_add:
-    // Convert index to byte offset (64-bit)
-    cvta.to.global.u64      %rd4, %rd1;     // get global address of A
-    cvta.to.global.u64      %rd5, %rd2;     // get global address of B
-    cvta.to.global.u64      %rd6, %rd3;     // get global address of C
-    
-    // Multiply index by 4 (sizeof(float)) using 64-bit multiplication
-    mul.lo.s64  %rd7, %r5, 4;           // %rd7 = idx * 4
+    // Convert index to byte offset (float = 4 bytes)
+    // Use 64-bit multiplication with sign extension
+    mul.wide.s32    %rd4, %r5, 4;      // %rd4 = (u64)index * 4
     
     // Add offset to base addresses
-    add.s64         %rd4, %rd4, %rd7;       // A + offset
-    add.s64         %rd5, %rd5, %rd7;       // B + offset
-    add.s64         %rd6, %rd6, %rd7;       // C + offset
+    add.u64         %rd5, %rd1, %rd4;  // addr A[index]
+    add.u64         %rd6, %rd2, %rd4;  // addr B[index]
+    add.u64         %rd7, %rd3, %rd4;  // addr C[index]
     
     // Load values
-    ld.global.f32   %f1, [%rd4];
-    ld.global.f32   %f2, [%rd5];
+    ld.global.f32   %f1, [%rd5];
+    ld.global.f32   %f2, [%rd6];
     
     // Add
-    add.f32 %f3, %f1, %f2;
+    add.f32         %f3, %f1, %f2;
     
     // Store result
-    st.global.f32 [%rd6], %f3;
+    st.global.f32   [%rd7], %f3;
     
     ret;
 }
