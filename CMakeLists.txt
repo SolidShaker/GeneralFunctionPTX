@@ -11,7 +11,7 @@ file(GLOB PTX_FILES
     ${KERNELS_DIR}/*.ptx
 )
 
-file(GLOBAL SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.*)
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.*)
 add_executable(main SOURCES)
 
 
