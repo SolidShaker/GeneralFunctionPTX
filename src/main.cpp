@@ -13,7 +13,7 @@ int main()
         PTXLoader loader;
         loader.Init();
         
-        vecAdd = loader.LoadKernel("vectorAdd", "krVectorAdd");
+        vecAdd = loader.LoadKernel("vectorAdd", "krVecAdd");
 
         if (vecAdd)
         {
