@@ -5,7 +5,7 @@
 
 
 
-.visible .entry vec_add(
+.visible .entry krVecAdd(
     .param .u64 param_A,
     .param .u64 param_B,
     .param .u64 param_C,
